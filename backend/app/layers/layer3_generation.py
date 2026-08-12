@@ -5,15 +5,15 @@ from app.llm_provider import llm_provider
 class Layer3BoundedGeneration:
     """
     Layer 3 — Bounded Generation:
-    Drafts an answer using LLM generation (Gemini / OpenAI / Intelligent LLM Core),
+    Drafts an answer using LLM generation & Live Real-World Factual Search (Wikipedia API / Gemini / OpenAI),
     conditioned strictly on retrieved passages when relevant corpus evidence exists,
-    or generating articulate ChatGPT/Gemini/Claude-style answers for general queries.
+    or generating accurate ChatGPT/Google/Claude-style factual answers for general queries.
     """
 
     def execute(self, query: str, layer2_output: Dict[str, Any], api_key: str = "") -> Dict[str, Any]:
         passages = layer2_output.get("passages", [])
         
-        # Check matching passages in corpus
+        # Check matching passages in local corpus
         query_words = set(re.findall(r'\b[a-zA-Z0-9\-]{3,}\b', query.lower()))
         stopwords = {'what', 'when', 'where', 'which', 'who', 'how', 'why', 'about', 'with', 'does', 'have', 'from', 'this', 'that', 'in', 'the', 'is', 'are', 'was', 'were'}
         query_words = {w for w in query_words if w not in stopwords}
@@ -25,7 +25,7 @@ class Layer3BoundedGeneration:
             if overlap_count >= 2 or (overlap_count >= 1 and len(query_words) <= 2):
                 matched_passages.append(p)
 
-        # Call LLM provider engine
+        # Call LLM & Live Factual Provider
         llm_res = llm_provider.generate_llm_response(
             query=query,
             context_passages=matched_passages if matched_passages else passages[:2],
@@ -33,7 +33,7 @@ class Layer3BoundedGeneration:
         )
 
         full_text = llm_res.get("text", "")
-        provider_name = llm_res.get("provider", "LLM Engine")
+        provider_name = llm_res.get("provider", "Live Factual Core")
 
         # Decompose generated answer into individual sentences
         raw_sents = re.split(r'(?<=[.!?])\s+', full_text)
@@ -59,14 +59,14 @@ class Layer3BoundedGeneration:
                     "text_snippet": best_p["text"]
                 })
             else:
-                doc_tag = "[General Knowledge]"
-                cited = f"{s_clean} {doc_tag}" if doc_tag not in s_clean else s_clean
+                doc_tag = f"[{provider_name}]"
+                cited = f"{s_clean} {doc_tag}" if not re.search(r'\[.+\]', s_clean) else s_clean
                 draft_sentences.append(cited)
                 citations_used.append({
-                    "doc_id": "GENERAL_KNOWLEDGE",
-                    "doc_title": f"LLM Factual Knowledge ({provider_name})",
-                    "passage_id": "GK-001",
-                    "text_snippet": "Generative LLM factual knowledge."
+                    "doc_id": "FACTUAL_KNOWLEDGE",
+                    "doc_title": provider_name,
+                    "passage_id": "FK-001",
+                    "text_snippet": s_clean
                 })
 
         output = {

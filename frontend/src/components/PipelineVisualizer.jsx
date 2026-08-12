@@ -4,43 +4,73 @@ import { Play, Sparkles, CheckCircle2, AlertTriangle, Layers, Clock, ShieldAlert
 export default function PipelineVisualizer({ onExecuteQuery, loading, pipelineResult, sampleQueries }) {
   const [queryInput, setQueryInput] = useState('');
   const [apiKeyInput, setApiKeyInput] = useState('');
+  const [selectedAgent, setSelectedAgent] = useState('auto');
   const [showSettings, setShowSettings] = useState(false);
   const [expandedLayer, setExpandedLayer] = useState(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (queryInput.trim()) {
-      onExecuteQuery(queryInput, apiKeyInput);
+      onExecuteQuery(queryInput, apiKeyInput, selectedAgent);
     }
   };
 
   const handleSampleClick = (q) => {
     setQueryInput(q);
-    onExecuteQuery(q, apiKeyInput);
+    onExecuteQuery(q, apiKeyInput, selectedAgent);
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* Search Bar Panel */}
       <div className="glass-panel" style={{ padding: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Sparkles size={18} color="var(--accent-primary)" /> Execute Bounded LLM Query (ChatGPT / Gemini / Claude Core)
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Sparkles size={20} color="var(--accent-primary)" /> Multi-Agent Bounded Intelligence Engine
           </h2>
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            style={{
-              background: 'rgba(255, 255, 255, 0.08)',
-              border: '1px solid var(--border-glass)',
-              color: 'var(--text-muted)',
-              borderRadius: '6px',
-              padding: '4px 10px',
-              fontSize: '0.78rem',
-              cursor: 'pointer'
-            }}
-          >
-            ⚙️ {showSettings ? 'Hide LLM Settings' : 'LLM API Settings'}
-          </button>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {/* Agent Selector Dropdown */}
+            <select
+              value={selectedAgent}
+              onChange={(e) => setSelectedAgent(e.target.value)}
+              disabled={loading}
+              style={{
+                background: 'rgba(99, 102, 241, 0.15)',
+                border: '1px solid rgba(99, 102, 241, 0.4)',
+                color: '#c7d2fe',
+                borderRadius: '8px',
+                padding: '8px 14px',
+                fontSize: '0.85rem',
+                fontWeight: '700',
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="auto" style={{ background: '#090d16', color: '#fff' }}>⚡ Auto (Live Web Search + LLM Agent)</option>
+              <option value="duckduckgo" style={{ background: '#090d16', color: '#fff' }}>🌐 DuckDuckGo Free Live Search Agent (Zero Key)</option>
+              <option value="gemini" style={{ background: '#090d16', color: '#fff' }}>🌟 Google Gemini 1.5 Flash Agent</option>
+              <option value="openai" style={{ background: '#090d16', color: '#fff' }}>🤖 ChatGPT / OpenAI GPT-4o-mini Agent</option>
+              <option value="claude" style={{ background: '#090d16', color: '#fff' }}>🎭 Anthropic Claude 3 Haiku Agent</option>
+              <option value="corpus" style={{ background: '#090d16', color: '#fff' }}>📚 HBI-TGA Vector Corpus Agent</option>
+            </select>
+
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              style={{
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid var(--border-glass)',
+                color: 'var(--text-muted)',
+                borderRadius: '8px',
+                padding: '8px 12px',
+                fontSize: '0.82rem',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              ⚙️ {showSettings ? 'Hide Key' : 'API Key'}
+            </button>
+          </div>
         </div>
 
         {/* Optional API Key settings input */}
@@ -48,16 +78,16 @@ export default function PipelineVisualizer({ onExecuteQuery, loading, pipelineRe
           <div style={{
             background: 'rgba(0, 0, 0, 0.3)',
             border: '1px solid var(--border-glass)',
-            padding: '12px 16px',
+            padding: '14px 18px',
             borderRadius: 'var(--radius-sm)',
             marginBottom: '16px'
           }}>
-            <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
-              Custom API Key (Google Gemini API / OpenAI API Key - Optional):
+            <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
+              Custom API Key (Gemini API Key / OpenAI API Key / Claude API Key):
             </label>
             <input
               type="password"
-              placeholder="Paste your Gemini or OpenAI API Key here (or leave blank to use Built-in LLM Core)"
+              placeholder="Paste your Gemini, OpenAI, or Claude API key (or leave blank to use Free Auto Web Agent)..."
               value={apiKeyInput}
               onChange={(e) => setApiKeyInput(e.target.value)}
               style={{
@@ -65,7 +95,7 @@ export default function PipelineVisualizer({ onExecuteQuery, loading, pipelineRe
                 background: 'rgba(0, 0, 0, 0.4)',
                 border: '1px solid var(--border-glass)',
                 borderRadius: '6px',
-                padding: '8px 12px',
+                padding: '10px 14px',
                 color: '#fff',
                 fontSize: '0.85rem'
               }}
@@ -78,7 +108,7 @@ export default function PipelineVisualizer({ onExecuteQuery, loading, pipelineRe
             type="text"
             value={queryInput}
             onChange={(e) => setQueryInput(e.target.value)}
-            placeholder="Ask any question (e.g. IPL 2024 winner, Metformin dose, Quantum Computing, Space)..."
+            placeholder="Ask any question to test ChatGPT, Gemini, Claude or Live Web Search Agents..."
             disabled={loading}
             style={{
               flex: 1,
@@ -93,7 +123,7 @@ export default function PipelineVisualizer({ onExecuteQuery, loading, pipelineRe
             }}
           />
           <button type="submit" className="glow-btn" disabled={loading || !queryInput.trim()}>
-            {loading ? 'Generating & Verifying...' : <>Run Pipeline <Play size={16} /></>}
+            {loading ? 'Executing Agent Pipeline...' : <>Run Agent <Play size={16} /></>}
           </button>
         </form>
 
@@ -139,9 +169,9 @@ export default function PipelineVisualizer({ onExecuteQuery, loading, pipelineRe
             animation: 'spin 1s linear infinite',
             margin: '0 auto 16px auto'
           }} />
-          <h3 style={{ fontSize: '1.05rem', fontWeight: '700' }}>Executing LLM Generation & Verification Pipeline...</h3>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: '700' }}>Executing Multi-Agent LLM Generation & Verification Pipeline...</h3>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '6px' }}>
-            Layer 1 Query → Layer 2 Retrieval → Layer 3 LLM Generation → Layer 4 Verification → Layer 5 Correction → Layer 6 Assembly
+            Layer 1 Query → Layer 2 Retrieval → Layer 3 AI Agent Generation → Layer 4 Verification → Layer 5 Correction → Layer 6 Assembly
           </p>
           <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
         </div>
@@ -155,7 +185,7 @@ export default function PipelineVisualizer({ onExecuteQuery, loading, pipelineRe
           <div className="glass-panel" style={{ padding: '24px', borderLeft: '4px solid var(--accent-primary)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '16px' }}>
               <div>
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '700' }}>FINAL VERIFIED LLM RESPONSE</span>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '700' }}>FINAL VERIFIED AGENT RESPONSE</span>
                 <h3 style={{ fontSize: '1.15rem', fontWeight: '800', marginTop: '4px' }}>
                   {pipelineResult.query}
                 </h3>

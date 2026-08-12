@@ -41,7 +41,7 @@ export default function App() {
     fetchSampleQueries();
   }, []);
 
-  const handleExecuteQuery = async (queryText, apiKey = '') => {
+  const handleExecuteQuery = async (queryText, apiKey = '', selectedAgent = 'auto') => {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/query`, {
@@ -49,7 +49,8 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           query: queryText,
-          api_key: apiKey 
+          api_key: apiKey,
+          selected_agent: selectedAgent 
         })
       });
       const data = await res.json();

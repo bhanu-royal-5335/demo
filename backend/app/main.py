@@ -28,6 +28,7 @@ class QueryRequest(BaseModel):
     query: str
     max_iterations: Optional[int] = config.MAX_CORRECTION_ITERATIONS
     api_key: Optional[str] = ""
+    selected_agent: Optional[str] = "auto"
 
 class IngestRequest(BaseModel):
     title: str
@@ -62,7 +63,8 @@ def process_query(payload: QueryRequest):
     result = orchestrator.run_pipeline(
         query=payload.query.strip(),
         max_iterations=payload.max_iterations,
-        api_key=payload.api_key.strip() if payload.api_key else ""
+        api_key=payload.api_key.strip() if payload.api_key else "",
+        selected_agent=payload.selected_agent.strip() if payload.selected_agent else "auto"
     )
     return result
 

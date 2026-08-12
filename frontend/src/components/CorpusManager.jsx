@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Database, PlusCircle, CheckCircle2 } from './Icons';
 
-export default function CorpusManager({ onIngestComplete }) {
+export default function CorpusManager({ onIngestComplete, apiBase = '' }) {
   const [documents, setDocuments] = useState([]);
   const [passagesCount, setPassagesCount] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -14,7 +14,7 @@ export default function CorpusManager({ onIngestComplete }) {
 
   const fetchCorpus = async () => {
     try {
-      const res = await fetch('/api/documents');
+      const res = await fetch(`${apiBase}/api/documents`);
       const data = await res.json();
       setDocuments(data.documents || []);
       setPassagesCount(data.passages_count || 0);
@@ -35,7 +35,7 @@ export default function CorpusManager({ onIngestComplete }) {
     setIngestSuccess('');
 
     try {
-      const res = await fetch('/api/ingest', {
+      const res = await fetch(`${apiBase}/api/ingest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

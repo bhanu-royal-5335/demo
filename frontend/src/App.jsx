@@ -5,6 +5,10 @@ import ClaimTable from './components/ClaimTable';
 import CorpusManager from './components/CorpusManager';
 import BaselineCompare from './components/BaselineCompare';
 
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+  ? 'http://127.0.0.1:8000' 
+  : '';
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('pipeline');
   const [health, setHealth] = useState(null);
@@ -14,7 +18,7 @@ export default function App() {
 
   const fetchHealth = async () => {
     try {
-      const res = await fetch('/api/health');
+      const res = await fetch(`${API_BASE}/api/health`);
       const data = await res.json();
       setHealth(data);
     } catch (err) {
@@ -24,7 +28,7 @@ export default function App() {
 
   const fetchSampleQueries = async () => {
     try {
-      const res = await fetch('/api/sample-queries');
+      const res = await fetch(`${API_BASE}/api/sample-queries`);
       const data = await res.json();
       setSampleQueries(data);
     } catch (err) {
@@ -40,7 +44,7 @@ export default function App() {
   const handleExecuteQuery = async (queryText) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/query', {
+      const res = await fetch(`${API_BASE}/api/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: queryText })
@@ -51,7 +55,7 @@ export default function App() {
     } catch (err) {
       console.error('Pipeline execution error:', err);
       setLoading(false);
-      alert('Error executing query pipeline. Check backend logs.');
+      alert('Error executing query pipeline. Please ensure the backend server is running on http://127.0.0.1:8000.');
     }
   };
 
@@ -74,7 +78,7 @@ export default function App() {
         )}
 
         {activeTab === 'corpus' && (
-          <CorpusManager onIngestComplete={fetchHealth} />
+          <CorpusManager onIngestComplete={fetchHealth} apiBase={API_BASE} />
         )}
 
         {activeTab === 'evaluation' && (
@@ -90,7 +94,7 @@ export default function App() {
         borderTop: '1px solid var(--border-glass)',
         marginTop: 'auto'
       }}>
-        Hierarchical Bounded Intelligence Architecture (HBI-TGA) • B.Tech Major Project • Fully Operational
+        Hierarchical Bounded Intelligence Architecture (HBI-TGA) • B.Tech Major Project • Operational Local Server
       </footer>
     </div>
   );

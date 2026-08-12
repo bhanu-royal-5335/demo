@@ -3,33 +3,82 @@ import { Play, Sparkles, CheckCircle2, AlertTriangle, Layers, Clock, ShieldAlert
 
 export default function PipelineVisualizer({ onExecuteQuery, loading, pipelineResult, sampleQueries }) {
   const [queryInput, setQueryInput] = useState('');
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
   const [expandedLayer, setExpandedLayer] = useState(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (queryInput.trim()) {
-      onExecuteQuery(queryInput);
+      onExecuteQuery(queryInput, apiKeyInput);
     }
   };
 
   const handleSampleClick = (q) => {
     setQueryInput(q);
-    onExecuteQuery(q);
+    onExecuteQuery(q, apiKeyInput);
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* Search Bar Panel */}
       <div className="glass-panel" style={{ padding: '24px' }}>
-        <h2 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Sparkles size={18} color="var(--accent-primary)" /> Execute Hierarchical Bounded Query
-        </h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Sparkles size={18} color="var(--accent-primary)" /> Execute Bounded LLM Query (ChatGPT / Gemini / Claude Core)
+          </h2>
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            style={{
+              background: 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid var(--border-glass)',
+              color: 'var(--text-muted)',
+              borderRadius: '6px',
+              padding: '4px 10px',
+              fontSize: '0.78rem',
+              cursor: 'pointer'
+            }}
+          >
+            ⚙️ {showSettings ? 'Hide LLM Settings' : 'LLM API Settings'}
+          </button>
+        </div>
+
+        {/* Optional API Key settings input */}
+        {showSettings && (
+          <div style={{
+            background: 'rgba(0, 0, 0, 0.3)',
+            border: '1px solid var(--border-glass)',
+            padding: '12px 16px',
+            borderRadius: 'var(--radius-sm)',
+            marginBottom: '16px'
+          }}>
+            <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+              Custom API Key (Google Gemini API / OpenAI API Key - Optional):
+            </label>
+            <input
+              type="password"
+              placeholder="Paste your Gemini or OpenAI API Key here (or leave blank to use Built-in LLM Core)"
+              value={apiKeyInput}
+              onChange={(e) => setApiKeyInput(e.target.value)}
+              style={{
+                width: '100%',
+                background: 'rgba(0, 0, 0, 0.4)',
+                border: '1px solid var(--border-glass)',
+                borderRadius: '6px',
+                padding: '8px 12px',
+                color: '#fff',
+                fontSize: '0.85rem'
+              }}
+            />
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
           <input
             type="text"
             value={queryInput}
             onChange={(e) => setQueryInput(e.target.value)}
-            placeholder="Ask a factual question to test retrieval grounding, verification & self-correction..."
+            placeholder="Ask any question (e.g. IPL 2024 winner, Metformin dose, Quantum Computing, Space)..."
             disabled={loading}
             style={{
               flex: 1,
@@ -44,7 +93,7 @@ export default function PipelineVisualizer({ onExecuteQuery, loading, pipelineRe
             }}
           />
           <button type="submit" className="glow-btn" disabled={loading || !queryInput.trim()}>
-            {loading ? 'Processing Layers...' : <>Run Pipeline <Play size={16} /></>}
+            {loading ? 'Generating & Verifying...' : <>Run Pipeline <Play size={16} /></>}
           </button>
         </form>
 
@@ -90,9 +139,9 @@ export default function PipelineVisualizer({ onExecuteQuery, loading, pipelineRe
             animation: 'spin 1s linear infinite',
             margin: '0 auto 16px auto'
           }} />
-          <h3 style={{ fontSize: '1.05rem', fontWeight: '700' }}>Running Layered Bounded Intelligence Engine...</h3>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: '700' }}>Executing LLM Generation & Verification Pipeline...</h3>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '6px' }}>
-            Layer 1 Query → Layer 2 Retrieval → Layer 3 Generation → Layer 4 Verification → Layer 5 Correction → Layer 6 Assembly
+            Layer 1 Query → Layer 2 Retrieval → Layer 3 LLM Generation → Layer 4 Verification → Layer 5 Correction → Layer 6 Assembly
           </p>
           <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
         </div>
@@ -106,7 +155,7 @@ export default function PipelineVisualizer({ onExecuteQuery, loading, pipelineRe
           <div className="glass-panel" style={{ padding: '24px', borderLeft: '4px solid var(--accent-primary)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '16px' }}>
               <div>
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '700' }}>FINAL VERIFIED RESPONSE</span>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '700' }}>FINAL VERIFIED LLM RESPONSE</span>
                 <h3 style={{ fontSize: '1.15rem', fontWeight: '800', marginTop: '4px' }}>
                   {pipelineResult.query}
                 </h3>
@@ -155,7 +204,7 @@ export default function PipelineVisualizer({ onExecuteQuery, loading, pipelineRe
               }}>
                 <ShieldAlert size={18} />
                 <span>
-                  <strong>FR-7 Audit Alert:</strong> {pipelineResult.flagged_unresolved.length} claim(s) remain unverified after maximum self-correction iterations. They have been explicitly tagged in the response.
+                  <strong>FR-7 Audit Alert:</strong> {pipelineResult.flagged_unresolved.length} claim(s) remain unverified after maximum self-correction iterations.
                 </span>
               </div>
             )}

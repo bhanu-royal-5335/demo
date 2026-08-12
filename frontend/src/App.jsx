@@ -41,13 +41,16 @@ export default function App() {
     fetchSampleQueries();
   }, []);
 
-  const handleExecuteQuery = async (queryText) => {
+  const handleExecuteQuery = async (queryText, apiKey = '') => {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: queryText })
+        body: JSON.stringify({ 
+          query: queryText,
+          api_key: apiKey 
+        })
       });
       const data = await res.json();
       setPipelineResult(data);

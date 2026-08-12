@@ -14,7 +14,7 @@ class Layer0Orchestrator:
     Manages end-to-end state transitions, enforces iteration caps, logs intermediate outputs 
     per layer for auditability, and computes benchmark metrics against baseline single-pass RAG.
     """
-    def run_pipeline(self, query: str, max_iterations: int = None) -> Dict[str, Any]:
+    def run_pipeline(self, query: str, max_iterations: int = None, api_key: str = "") -> Dict[str, Any]:
         start_time = time.time()
         if max_iterations is None:
             max_iterations = config.MAX_CORRECTION_ITERATIONS
@@ -35,9 +35,9 @@ class Layer0Orchestrator:
         l2_out["latency_seconds"] = l2_time
         pipeline_logs.append(l2_out)
 
-        # Layer 3: Bounded Generation
+        # Layer 3: Bounded Generation (LLM Core)
         t3_start = time.time()
-        l3_out = layer3_engine.execute(query, l2_out)
+        l3_out = layer3_engine.execute(query, l2_out, api_key=api_key)
         l3_time = round(time.time() - t3_start, 3)
         l3_out["latency_seconds"] = l3_time
         pipeline_logs.append(l3_out)

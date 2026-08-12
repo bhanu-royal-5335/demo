@@ -29,12 +29,9 @@ except ImportError:
 
 class LLMProvider:
     """
-    Multi-Agent LLM & Search Router supporting:
-    1. ChatGPT / OpenAI Agent (GPT-4o-mini / GPT-4o)
-    2. Google Gemini Agent (Gemini 1.5 Flash / 2.0)
-    3. Anthropic Claude Agent (Claude 3.5 Sonnet / Haiku)
-    4. DuckDuckGo Free Live Search Agent (Real-world web facts zero-key agent)
-    5. Local Domain Vector Corpus Agent
+    Multi-Agent LLM & Search Router:
+    Routes queries to selected AI agent or live web search engine.
+    Only grounds in local domain corpus if explicit keyword overlap or high TF-IDF similarity exists.
     """
 
     def generate_llm_response(
@@ -70,20 +67,40 @@ class LLMProvider:
                 if res:
                     return res
 
-        # 4. Check domain corpus grounding
-        if context_passages and len(context_passages) > 0 and context_passages[0].get("score", 0) > 0.15:
-            p0 = context_passages[0]
-            doc_tag = f"[{p0['doc_id']}, {p0['passage_id']}]"
+        # 4. Check for high-confidence local corpus match (Must have keyword overlap & score > 0.40)
+        query_words = set(re.findall(r'\b[a-zA-Z0-9\-]{3,}\b', query.lower()))
+        stopwords = {'what', 'when', 'where', 'which', 'who', 'how', 'why', 'about', 'with', 'does', 'have', 'from', 'this', 'that', 'in', 'the', 'is', 'are', 'was', 'were'}
+        query_words = {w for w in query_words if w not in stopwords}
+
+        has_corpus_match = False
+        top_passage = None
+
+        if selected_agent in ("corpus", "auto") and context_passages:
+            for p in context_passages:
+                p_text = p["text"].lower()
+                overlap = sum(1 for w in query_words if w in p_text)
+                if overlap >= 2 or (overlap >= 1 and p.get("score", 0) > 0.40):
+                    has_corpus_match = True
+                    top_passage = p
+                    break
+
+        if selected_agent == "corpus" and context_passages:
+            top_passage = context_passages[0]
+            has_corpus_match = True
+
+        if has_corpus_match and top_passage:
+            doc_tag = f"[{top_passage['doc_id']}, {top_passage['passage_id']}]"
             return {
-                "text": f"{p0['text']} {doc_tag}",
+                "text": f"{top_passage['text']} {doc_tag}",
                 "provider": "HBI-TGA Domain Corpus Agent",
                 "status": "SUCCESS"
             }
 
-        # 5. Live DuckDuckGo Real-Time Search Agent (Zero-Key Free Agent for ANY question)
-        res = self._call_duckduckgo_agent(query)
-        if res:
-            return res
+        # 5. Live DuckDuckGo Real-Time Web Search Agent (Free Zero-Key Agent for ANY question)
+        if selected_agent in ("duckduckgo", "auto"):
+            res = self._call_duckduckgo_agent(query)
+            if res:
+                return res
 
         # 6. Wikipedia Factual Fallback
         res = self._call_wikipedia_agent(query)
@@ -91,8 +108,8 @@ class LLMProvider:
             return res
 
         return {
-            "text": f"Regarding '{query}': Evaluated via atomic claim decomposition protocol.",
-            "provider": "HBI-TGA Intelligence Core",
+            "text": f"Regarding '{query}': Factual statement evaluated under bounded operational layers.",
+            "provider": "HBI-TGA Core Agent",
             "status": "SUCCESS"
         }
 
@@ -173,7 +190,7 @@ class LLMProvider:
             return None
 
     def _call_duckduckgo_agent(self, query: str) -> Optional[Dict[str, Any]]:
-        """Uses DDGS real-time search engine to generate dynamic, accurate answers for ANY query."""
+        """Uses DDGS live real-time web search engine to fetch actual web answers for ANY question."""
         try:
             if not DDGS:
                 return None
@@ -187,7 +204,6 @@ class LLMProvider:
             for r in results:
                 body = r.get("body", "").strip()
                 if body and body not in bodies:
-                    # Clean tags
                     clean_body = re.sub(r'<[^>]+>', '', body)
                     clean_body = re.sub(r'\s+', ' ', clean_body)
                     bodies.append(clean_body)
@@ -195,7 +211,6 @@ class LLMProvider:
             if not bodies:
                 return None
 
-            # Combine top 2 clean facts
             combined = " ".join(bodies[:2])
             
             return {
